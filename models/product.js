@@ -39,4 +39,18 @@ module.exports = class Product {
   static fetchAll(cb) {
     getProductsFromFile(cb);
   }
+
+  //the callback(cb) function will be executed only when we are done with finding the id of the desired item 
+  static findById(id, cb) {
+    //we will get all the products form file, by calling the function getproductsFromFile and then the callback, to find the right item with specific id, will be executed when all the items are fetched.
+    getProductsFromFile((products) => {
+      let product;
+      for(let x = 0; x < products.length; x++) {
+        if(products[x].id === id) {
+          product = products[x]; 
+        }
+      }
+      cb(product);
+    });
+  }
 };

@@ -11,11 +11,15 @@ exports.getProducts = (req, res, next) => {
 };
 
 exports.getProduct = (req, res, next) => {
-  console.log('Inside get single product')
   const prodId = req.params.productId; //productId is the variable name given in the routing file of shop
-  console.log(prodId);
-  res.redirect('/');
-}
+  Product.findById(prodId, product => {
+    res.render('shop/product-detail', {
+      product: product,
+      pageTitle: product.title,
+      path: '/products'
+    });
+  });
+};
 
 exports.getIndex = (req, res, next) => {
   Product.fetchAll(products => {

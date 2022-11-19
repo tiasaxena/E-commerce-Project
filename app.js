@@ -1,4 +1,5 @@
 const path = require('path');
+const PORT = 3000;
 
 const express = require('express');
 const bodyParser = require('body-parser');
@@ -19,10 +20,11 @@ app.use(express.static(path.join(__dirname, 'public')));
 
 //The app.use(path, callback) function is used to mount the specified middleware function(s) at the path which is being specified
 app.use('/admin', adminRoutes);
+
 app.use(shopRoutes);
 
 app.use(errorController.get404);
 
-app.listen(5000, () => {
-    console.log('Server listening on port 5000')
+app.listen(PORT, () => {
+    console.log(`Server listening on port ${PORT}`);
 });
