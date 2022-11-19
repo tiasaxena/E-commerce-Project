@@ -28,9 +28,8 @@
                                 </div>
                                 <div class="card__actions">
                                     <a class='btn' href="/products/<%= product.id %>">Details</a>
-                                    <form action="/add-to-cart" method="POST">
-                                        <button class="btn">Add to Cart</button>
-                                    </form>
+                                    <!-- the second arguement is used to pass on the product object to the actual ejs file that is being called here(add-to-cart) as add-to-cart uses the product object's member variables -->
+                                    <%- include('../includes/add-to-cart.ejs', {product: product}) %>
                                 </div>
                             </article>
                             <% } %>
