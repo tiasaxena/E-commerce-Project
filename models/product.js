@@ -1,5 +1,7 @@
 const fs = require('fs');
 const path = require('path');
+const Cart = require('./cart');
+console.log(Cart);
 
 const p = path.join(
   path.dirname(process.mainModule.filename),
@@ -47,13 +49,28 @@ module.exports = class Product {
     });
   }
 
+  //delete a product
+  static deleteById(id) {
+    getProductsFromFile(products => {
+      //extract the product that matches the id
+      const product =  products.find(prod => prod.id === id);
+      const updatedProducts = products.filter(prod => prod.id !== id);
+      fs.writeFile(p, JSON.stringify(updatedProducts), err => {
+        // if upadted products are displayed successfully, then we can also proceed to delete the item from the cart if it is found there
+        if(!err) {
+          Cart.deleteProduct(id, product.price);
+        }
+      })
+    })
+  }
+
   static fetchAll(cb) {
     getProductsFromFile(cb);
   }
 
   //the callback(cb) function will be executed only when we are done with finding the id of the desired item 
   static findById(id, cb) {
-    //we will get all the products form file, by calling the function getproductsFromFile and then the callback, to find the right item with specific id, will be executed when all the items are fetched.
+    //we will get all the products from file, by calling the function getproductsFromFile and then the callback, to find the right item with specific id, will be executed when all the items are fetched.
     getProductsFromFile((products) => {
       let product;
       for(let x = 0; x < products.length; x++) {

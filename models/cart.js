@@ -8,7 +8,7 @@ const p = path.join(
     'cart.json'
 );
 
-// For making the product, with each new product, we needed to create a new object everytime. However, here we need not instantiate objects ewach time when a propduct is added to the cart. So we don't need to make a constructor. Rather, we will directly read form file.
+// For making the product, with each new product, we needed to create a new object everytime. However, here we need not instantiate objects each time when a propduct is added to the cart. So we don't need to make a constructor. Rather, we will directly read form file.
 module.exports = class Cart {
     //A static method (or static function) is a method defined as a member of an object but is accessible directly from an API object's constructor, rather than from an object instance created via the constructor.
     static addProduct(id, productPrice) {
@@ -40,11 +40,36 @@ module.exports = class Cart {
                 //add to the cart the new product to update the cart
                 cart.products = [...cart.products, updatedProduct];
             }
+            // + just before the productPrice is used to convert the String to Number
             cart.totalPrice = cart.totalPrice + +productPrice;
             //write to the cart file
             fs.writeFile(p, JSON.stringify(cart), err => {
                 console.log(err);
             })
         });
+    }
+
+    static deleteProduct = (id, productPrice) => {
+        //read the entire cart file and delete the matched items found
+        fs.readFile(p, (err, fileContent) => {
+            if(err) {
+                return;
+            }
+            //since no error is found, now update the cart by scanning through the cart to delete the product
+
+            //firstly mimic the current cart and then update the same
+            const updatedCart = { ...(JSON.parse(fileContent)) };
+            const product = updatedCart.products.find(prod => prod.id === id);
+            const productQty = product.qty;
+
+            //update the cart
+            updatedCart.products = updatedCart.products.filter(prod => prod.id !== id);
+            updatedCart.totalPrice = updatedCart.totalPrice - productPrice * productQty;
+
+            //write to the cart file
+            fs.writeFile(p, JSON.stringify(updatedCart), err => {
+                console.log(err);
+            })
+        })
     }
 } ;
