@@ -1,7 +1,6 @@
 const fs = require('fs');
 const path = require('path');
 const Cart = require('./cart');
-console.log(Cart);
 
 const p = path.join(
   path.dirname(process.mainModule.filename),

@@ -45,7 +45,7 @@ module.exports = class Cart {
             //write to the cart file
             fs.writeFile(p, JSON.stringify(cart), err => {
                 console.log(err);
-            })
+            });
         });
     }
 
@@ -56,10 +56,13 @@ module.exports = class Cart {
                 return;
             }
             //since no error is found, now update the cart by scanning through the cart to delete the product
-
             //firstly mimic the current cart and then update the same
             const updatedCart = { ...(JSON.parse(fileContent)) };
             const product = updatedCart.products.find(prod => prod.id === id);
+
+            if(!product) {
+                return;
+            }
             const productQty = product.qty;
 
             //update the cart
@@ -69,7 +72,19 @@ module.exports = class Cart {
             //write to the cart file
             fs.writeFile(p, JSON.stringify(updatedCart), err => {
                 console.log(err);
-            })
-        })
+            });
+        });
     }
-} ;
+
+    //get all the cart items
+    static getCart = (cb) => {
+        fs.readFile(p, (err, fileContent) => {
+            const cart = JSON.parse(fileContent);
+            if(err) {
+                cb(null);
+            } else {
+                cb(cart);
+            }
+        });
+    }
+};
