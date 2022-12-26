@@ -18,7 +18,7 @@ const getProductsFromFile = cb => {
   });
 };
 
-//either in the onctructor or in the save() method, we should pass a unique identifier. For now, let's make add it in the save methos  
+//either in the constructor or in the save() method, we should pass a unique identifier. For now, let's make add it in the save methods  
 module.exports = class Product {
   constructor(id, title, imageUrl, description, price) {
     this.id = id;
@@ -31,6 +31,7 @@ module.exports = class Product {
   save() {
     getProductsFromFile(products => {
       if(this.id) {
+        //handles product updation
         const existingProductIndex = products.findIndex(prod => prod.id === this.id);
         const updatedProducts = [...products];
         updatedProducts[existingProductIndex] = this;
@@ -52,7 +53,7 @@ module.exports = class Product {
   static deleteById(id) {
     getProductsFromFile(products => {
       //extract the product that matches the id
-      const product =  products.find(prod => prod.id === id);
+      const product = products.find(prod => prod.id === id);
       const updatedProducts = products.filter(prod => prod.id !== id);
       fs.writeFile(p, JSON.stringify(updatedProducts), err => {
         // if upadted products are displayed successfully, then we can also proceed to delete the item from the cart if it is found there

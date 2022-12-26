@@ -36,7 +36,7 @@ module.exports = class Cart {
                 cart.products[existingProductIndex] = updatedProduct;
             } else {
                 //if the item does not exists
-                updatedProduct = { id: id, qty: 1};
+                updatedProduct = { id: id, qty: 1 };
                 //add to the cart the new product to update the cart
                 cart.products = [...cart.products, updatedProduct];
             }
