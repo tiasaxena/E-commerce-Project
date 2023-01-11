@@ -1,4 +1,5 @@
 const Product = require('../models/product');
+const { ObjectId } = require('mongodb');
 
 //the second parameter passed to the render function has nothing to do with the naming and can be named anything. The variables are available in the views folder. 
 exports.getAddProduct = (req, res, next) => {
@@ -10,7 +11,7 @@ exports.getAddProduct = (req, res, next) => {
 };
 
 exports.getProducts = (req, res, next) => {
-  req.user.getProducts()
+  Product.fetchAll()
   .then(products => {
     res.render('admin/products', {
       prods: products,
@@ -28,9 +29,9 @@ exports.getEditProduct = (req, res, next) => {
   }
 
   const prodId = req.params.productId;
-  req.user.getProducts({ where: {id: prodId }})
+  Product.findById(prodId)
   .then(products => {
-    const product = products[0];
+    const product = products;
     if(!product) {
       return res.redirect('/');
     }
@@ -49,20 +50,15 @@ exports.postAddProduct = (req, res, next) => {
   const imageUrl = req.body.imageUrl;
   const price = req.body.price;
   const description = req.body.description;
-  //createProduct is one of the magic associations / special methods / mixins offered by sequelizer.
-  //Visit the docs and video: 164
-  req.user.createProduct({
-    title: title,
-    price: price,
-    imageUrl: imageUrl,
-    description: description,
-  })
-  .then((product) => {
+
+  const product = new Product(title, price, imageUrl, description, req.user._id);
+  product.save()
+  .then(result => {
     res.redirect('/admin/products');
   })
-  .catch((err) => {
+  .catch(err => {
     console.log(err);
-  });
+  })
 };
 
 exports.postEditProducts = (req, res, next) => {
@@ -72,31 +68,22 @@ exports.postEditProducts = (req, res, next) => {
   const updatedPrice = req.body.price;
   const updatedDescription = req.body.description;
 
-  Product.update({
-    title: updatedTitle,
-    imageUrl: updatedImageUrl,
-    description: updatedDescription,
-    price: updatedPrice,
-  }, {
-    where: {
-      id: prodId
-    }
-  })
+  Product.update(prodId, updatedTitle, updatedImageUrl, updatedPrice, updatedDescription, req.user._id)
   .then(() => {
     res.redirect('/admin/products');
   })
-  .catch( err => console.log(err));
+  .catch(err => {
+    console.log(err);
+  });
 };
 
 exports.postDeleteProduct = (req, res, next) => {
   const prodId = req.body.productId;
-  Product.findByPk(prodId)
-  .then(product => {
-    return product.destroy();
-  })
-  .then(result => {
-    console.log('Item Destroyed!');
+  Product.delete(prodId)
+  .then(() => {
     res.redirect('/admin/products');
   })
-  .catch(err => console.log(err));
+  .catch(err => {
+    console.log(err);
+  });
 }
