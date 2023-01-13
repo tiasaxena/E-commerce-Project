@@ -1,5 +1,4 @@
 const Product = require('../models/product');
-const { ObjectId } = require('mongodb');
 
 //the second parameter passed to the render function has nothing to do with the naming and can be named anything. The variables are available in the views folder. 
 exports.getAddProduct = (req, res, next) => {
@@ -11,7 +10,10 @@ exports.getAddProduct = (req, res, next) => {
 };
 
 exports.getProducts = (req, res, next) => {
-  Product.fetchAll()
+  Product.find()
+  //product model has user id field, but if we need the entire fields of the userId, we can get it by using population
+  // .populate('userId')
+  //using select, we can specify the only needful fields that we want.
   .then(products => {
     res.render('admin/products', {
       prods: products,
@@ -19,7 +21,9 @@ exports.getProducts = (req, res, next) => {
       path: '/admin/products'
     });
   })
-  .catch(err => console.log(err));
+  .catch(err =>{
+    console.log(err);
+  });
 };
 
 exports.getEditProduct = (req, res, next) => {
@@ -51,9 +55,18 @@ exports.postAddProduct = (req, res, next) => {
   const price = req.body.price;
   const description = req.body.description;
 
-  const product = new Product(title, price, imageUrl, description, req.user._id);
+  const product = new Product({
+    title: title,
+    price: price,
+    imageUrl: imageUrl,
+    description: description,
+    //here, we pass entire req.user object and mongoose will pick only ID  
+    userId: req.user, 
+  });
+
   product.save()
   .then(result => {
+    console.log('Product Created!');
     res.redirect('/admin/products');
   })
   .catch(err => {
@@ -68,7 +81,15 @@ exports.postEditProducts = (req, res, next) => {
   const updatedPrice = req.body.price;
   const updatedDescription = req.body.description;
 
-  Product.update(prodId, updatedTitle, updatedImageUrl, updatedPrice, updatedDescription, req.user._id)
+  Product.updateOne(
+    { _id: prodId },
+    {
+      title: updatedTitle,
+      imageUrl: updatedImageUrl,
+      price: updatedPrice,
+      description: updatedDescription,
+    }
+  )
   .then(() => {
     res.redirect('/admin/products');
   })
@@ -79,7 +100,7 @@ exports.postEditProducts = (req, res, next) => {
 
 exports.postDeleteProduct = (req, res, next) => {
   const prodId = req.body.productId;
-  Product.delete(prodId)
+  Product.findByIdAndDelete(prodId)
   .then(() => {
     res.redirect('/admin/products');
   })
