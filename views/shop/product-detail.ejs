@@ -12,6 +12,8 @@
             <h2><%= product.price %></h2>
             <p><%= product.description %></p>
             <!-- the second arguement is used to pass on the product object to the actual ejs file that is being called here(add-to-cart) as add-to-cart uses the product object's member variables -->
-            <%- include('../includes/add-to-cart.ejs', {product: product}) %>
+              <% if (isAuthenticated) { %>
+                                <%- include('../includes/add-to-cart.ejs', {product: product}) %>
+                            <% } %>
         </main>
         <%- include('../includes/end.ejs') %>
