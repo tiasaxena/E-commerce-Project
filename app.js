@@ -5,6 +5,8 @@ const bodyParser = require('body-parser');
 const mongoose = require('mongoose');
 const session = require('express-session');
 const MongoDBStore = require('connect-mongodb-session')(session);
+const csrf = require('csurf'); //prevents from CSRF attacks
+const flash = require('connect-flash'); //flash is a special area of session for storing messages 
 
 const PORT = 3000;
 require('dotenv').config();
@@ -18,7 +20,8 @@ const app = express();
 const store = new MongoDBStore({
     uri: process.env.MONGODB_CONNECTION_URI,
     collection: 'sessions',
-})
+});
+const csrfProtection = csrf();
 
 
 app.set('view engine', 'ejs');
@@ -47,22 +50,26 @@ app.use(session({
     //      configurations done here
     // }
 }));
-
+//we need to add the csrf token to all the views wherever potential sensitive post requests are made
+app.use(csrfProtection);
+app.use(flash());
 app.use((req, res, next) => {
-    if(req.session.user === undefined) {
-        return next();
+    if (!req.session.user) {
+      return next();
     }
     User.findById(req.session.user._id)
-    .then(user => {
-        console.log('user', user);
+      .then(user => {
         req.user = user;
         next();
-    })
-    .catch(err => {
-        console.log(err);
-    });
+      })
+      .catch(err => console.log(err));
 });
-
+app.use((req, res, next) => {
+  //these will be locally available for the views of the website
+  res.locals.isAuthenticated = req.session.isLoggedIn;
+  res.locals.csrfToken = req.csrfToken();
+  next();
+});
 app.use('/admin', adminRoutes);
 app.use(shopRoutes);
 app.use(authRoutes);
@@ -71,17 +78,6 @@ app.use(errorController.get404);
 //connects to the same mongoDB setup but with mongoose this time
 mongoose.connect(process.env.CONNECTION_URI)
 .then(result => {
-    User.findOne()
-    .then(user => {
-        if(!user) {
-            const user = new User({
-                username: 'Tia Saxena',
-                email: 'tia.test@gmai.com',
-                cart: { items:[] }
-            });
-            user.save();
-        }
-    })
     app.listen(PORT, () => {
         console.log(`App is listening to Port ${PORT}`)
     });

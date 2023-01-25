@@ -8,7 +8,6 @@ exports.getProducts = (req, res, next) => {
     prods: products,
     pageTitle: 'All Products',
     path: '/products',
-    isAuthenticated: req.session.isLoggedIn,
     });
   })
   .catch(err =>{
@@ -24,7 +23,6 @@ exports.getProduct = (req, res, next) => {
       product: product,
       pageTitle: product.title,
       path: '/products',
-      isAuthenticated: req.session.isLoggedIn,
     });
   })
   .catch(err => console.log('Error in showing the product details', err));
@@ -37,7 +35,10 @@ exports.getIndex = (req, res, next) => {
       prods: products,
       pageTitle: 'Shop',
       path: '/',
-      isAuthenticated: req.session.isLoggedIn,
+      //since the below 2 options are needed to be passed through every request, we will shift this to the app.js
+      // isAuthenticated: req.session.isLoggedIn,
+      //this function is provided by the middleware we initialized in app.js
+      // csrfToken: req.csrfToken(),
     });
   })
   .catch(err =>{
@@ -55,7 +56,6 @@ exports.getCart = (req, res, next) => {
       path: '/cart',
       pageTitle: 'Your Cart',
       products: products,
-      isAuthenticated: req.session.isLoggedIn,
     });
   })
   .catch(err => {
@@ -89,7 +89,7 @@ exports.postOrder = (req, res, next) => {
     });
     const order = new Order({
       user: {
-        username: req.user.username,
+        email: req.user.email,
         //mongoose will return only the id of the user model 
         userId: req.user,
       },
@@ -126,7 +126,6 @@ exports.getOrders = (req, res, next) => {
       path: '/orders',
       pageTitle: 'Your Orders',
       orders: orders,
-      isAuthenticated: req.session.isLoggedIn,
     });
   })
   .catch(err => console.log(err))
