@@ -1,6 +1,13 @@
 const brcypt = require('bcryptjs'); 
+const Mailjet = require('node-mailjet');
 
+require('dotenv').config();
 const User = require('../models/user');
+
+const mailjet = Mailjet.apiConnect(
+  process.env.MAILJET_API_KEY,
+  process.env.MAILJET_API_SECRET,
+);
 
 exports.getLogin = (req, res, next) => {
   let message = req.flash('error');
@@ -18,12 +25,31 @@ exports.getLogin = (req, res, next) => {
 
 exports.getSignup = (req, res, next) => {
   let message = req.flash('error');
+  if(message.length > 0) {
+    message = message[0];
+  } else {
+    message = null;
+  }
   res.render('auth/signup', {
     path: '/signup',
     pageTitle: 'Signup',
     errorMessage: message,
   });
 };
+
+exports.getReset = (req, res, next) => {
+  let message = req.flash('error');
+  if(message.length > 0) {
+    message = message[0];
+  } else {
+    message = null;
+  }
+  res.render('auth/reset', {
+    path: '/reset',
+    pageTitle: 'Reset Password',
+    errorMessage: message,
+  });
+}
 
 exports.postLogin = (req, res, next) => {
   //after the user logs in, we want to create a session
@@ -93,7 +119,8 @@ exports.postSignup = (req, res, next) => {
     }
     //since we can't decrypt, email IDs are not encrypted 
     //12 are the rounds of salting
-    return brcypt.hash(password, 12)
+    return brcypt
+    .hash(password, 12)
     .then(hashedPassword => {
       const user = new User({
         email: email,
@@ -103,11 +130,41 @@ exports.postSignup = (req, res, next) => {
       return user.save();
     })
     .then(result => {
-      req.flash(null);
-      res.redirect('/login');
+      req.flash('error', 'Successfully created account');
+      mailjet
+        .post('send', { version: 'v3.1' })
+        .request({
+          Messages: [
+            {
+              From: {
+                Email: "tia.saxena041202@gmail.com",
+                Name: "Verma Sir"
+              },
+              To: [
+                {
+                  Email: email,
+                  Name: "Check"
+                }
+              ],
+              Subject: "Successfully logged in to the Shopping site",
+              TextPart: "Dear passenger 1, welcome to Mailjet! May the delivery force be with you!",
+              HTMLPart: "<h3>Dear passenger 1, delivery force be with you!</h3>"
+            }
+          ]
+        })
+        .then((result) => {
+          console.log('result', result.body);
+        })
+        .catch((err) => {
+            console.log('err.statusCode', err);
+        })
+      return res.redirect('/login');
+    })
+    .catch(err => {
+      console.log(err);
     })
   })
   .catch(err => {
     console.log(err);
-  })
+  });
 };

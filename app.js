@@ -8,7 +8,7 @@ const MongoDBStore = require('connect-mongodb-session')(session);
 const csrf = require('csurf'); //prevents from CSRF attacks
 const flash = require('connect-flash'); //flash is a special area of session for storing messages 
 
-const PORT = 3000;
+const PORT = 8000;
 require('dotenv').config();
 
 const adminRoutes = require('./routes/admin');

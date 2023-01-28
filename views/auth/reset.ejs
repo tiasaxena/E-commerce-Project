@@ -17,15 +17,8 @@
                 <label for="Email">Email</label>
                 <input type="email" name="email" id="email">
             </div>
-            <div class="form-control">
-                <label for="Password">Password</label>
-                <input type="password" name="password" id="password">
-            </div>
             <input type="text" hidden name="_csrf" value="<%= csrfToken %>">
-            <button class="btn" type="submit">Login</button>
+            <button class="btn" type="submit">Reset Password</button>
         </form>
-        <div class="centered">
-            <a href="/reset">Reset Password</a>
-        </div>
     </main>
 <%- include('../includes/end.ejs') %></body>
