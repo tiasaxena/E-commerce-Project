@@ -10,7 +10,7 @@ const mongoConnect = (callback) => {
     //connects us to mongodb
     MongoClient.connect(uri)
     .then(client => {
-        console.log('Connected!');
+        // console.log('Connected!');
         //connect to the database 'shop', and if not found, create one
         _db = client.db();
         //this callback will spin the localhost:3000 server up

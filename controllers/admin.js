@@ -10,7 +10,9 @@ exports.getAddProduct = (req, res, next) => {
 };
 
 exports.getProducts = (req, res, next) => {
-  Product.find()
+  Product.find({
+    userId: req.user._id,
+  })
   //product model has user id field, but if we need the entire fields of the userId, we can get it by using population
   // .populate('userId')
   //using select, we can specify the only needful fields that we want.
@@ -79,17 +81,29 @@ exports.postEditProducts = (req, res, next) => {
   const updatedPrice = req.body.price;
   const updatedDescription = req.body.description;
 
-  Product.updateOne(
-    { _id: prodId },
-    {
-      title: updatedTitle,
-      imageUrl: updatedImageUrl,
-      price: updatedPrice,
-      description: updatedDescription,
+  //authorize that the item to be editted is actually created by the currently logged in the user
+  Product.findOne({
+    _id: prodId
+  })
+  .then(product => {
+    console.log('Check1');
+    console.log(product.userId, req.user._id, product.userId !== req.user._id);
+    if(String(product.userId) !== String(req.user._id)) {
+      console.log('Check2');
+      return res.redirect('/');
     }
-  )
-  .then(() => {
-    res.redirect('/admin/products');
+    console.log('Check3');
+    product.title = updatedTitle;
+    product.price = updatedPrice;
+    product.imageUrl = updatedImageUrl;
+    product.description = updatedDescription;
+    return product.save()
+    .then(result => {
+      res.redirect('/admin/products');
+    })
+    .catch(err => {
+      console.log(err);
+    })
   })
   .catch(err => {
     console.log(err);
@@ -98,7 +112,10 @@ exports.postEditProducts = (req, res, next) => {
 
 exports.postDeleteProduct = (req, res, next) => {
   const prodId = req.body.productId;
-  Product.findByIdAndDelete(prodId)
+  Product.deleteOne({
+    _id: prodId,
+    userId: req.user._id,
+  })
   .then(() => {
     res.redirect('/admin/products');
   })

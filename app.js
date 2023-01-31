@@ -8,7 +8,6 @@ const MongoDBStore = require('connect-mongodb-session')(session);
 const csrf = require('csurf'); //prevents from CSRF attacks
 const flash = require('connect-flash'); //flash is a special area of session for storing messages 
 
-const PORT = 8000;
 require('dotenv').config();
 
 const adminRoutes = require('./routes/admin');
@@ -78,8 +77,8 @@ app.use(errorController.get404);
 //connects to the same mongoDB setup but with mongoose this time
 mongoose.connect(process.env.CONNECTION_URI)
 .then(result => {
-    app.listen(PORT, () => {
-        console.log(`App is listening to Port ${PORT}`)
+    app.listen(process.env.PORT, () => {
+        console.log(`App is listening to Port ${process.env.PORT}`)
     });
 })
 .catch(err => {

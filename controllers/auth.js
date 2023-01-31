@@ -1,3 +1,6 @@
+//NodeJS's unique library that generates secure and unique random IDs for the users. 
+const crypto = require('crypto');
+
 const brcypt = require('bcryptjs'); 
 const Mailjet = require('node-mailjet');
 
@@ -48,6 +51,32 @@ exports.getReset = (req, res, next) => {
     path: '/reset',
     pageTitle: 'Reset Password',
     errorMessage: message,
+  });
+}
+
+exports.getNewPassword = (req, res, next) => {
+  const token = req.params.token;
+  User.findOne({
+    resetToken: token,
+    resetTokenExpiration: { $gt: Date.now() }
+  })
+  .then(user => {
+    let message = req.flash('error');
+    if(message.length > 0) {
+      message = message[0];
+    } else {
+      message = null;
+    }
+    res.render('auth/new-password', {
+      path: '/new-password',
+      pageTitle: 'New Password',
+      errorMessage: message,
+      userId: user._id.toString(),
+      passwordToken: token,
+    });
+  })
+  .catch(err => {
+    console.log(err);
   });
 }
 
@@ -137,8 +166,8 @@ exports.postSignup = (req, res, next) => {
           Messages: [
             {
               From: {
-                Email: "tia.saxena041202@gmail.com",
-                Name: "Verma Sir"
+                Email: "verma.sshubam@gmail.com",
+                Name: "XYZ ShoppersStop"
               },
               To: [
                 {
@@ -147,16 +176,15 @@ exports.postSignup = (req, res, next) => {
                 }
               ],
               Subject: "Successfully logged in to the Shopping site",
-              TextPart: "Dear passenger 1, welcome to Mailjet! May the delivery force be with you!",
-              HTMLPart: "<h3>Dear passenger 1, delivery force be with you!</h3>"
+              HTMLPart: "<h3>You successfully signed up to ShopperStop!</h3>"
             }
           ]
         })
         .then((result) => {
-          console.log('result', result.body);
+          console.log('Account created successfully!');
         })
         .catch((err) => {
-            console.log('err.statusCode', err);
+            console.log('err', err);
         })
       return res.redirect('/login');
     })
@@ -168,3 +196,88 @@ exports.postSignup = (req, res, next) => {
     console.log(err);
   });
 };
+
+exports.postReset = (req, res, next) => {
+  //generate random taken and save it to the user model
+  //32 is the bytes
+  crypto.randomBytes(32, (err, buffer) => {
+    if(err) {
+      console.log(err);
+      return res.redirect('/reset');
+    }
+    const token = buffer.toString('hex'); //converts the buffer to string in hex form
+    //find if the email entered in the user form actually exists or not
+    User.findOne({
+      email: req.body.email,
+    })
+    .then(user => {
+      if(!user) {
+        req.flash('error', 'No account with the entered email found!');
+        return res.redirect('/reset');
+      }
+      user.resetToken = token;
+      user.resetTokenExpiration = Date.now() + 3600000;
+      return user.save();
+    })
+    .then(result => {
+      console.log(token);
+      res.redirect('/');
+      mailjet.post('send', { version: 'v3.1' })
+      .request({
+        Messages: [
+          {
+            From: {
+              Email: "verma.sshubam@gmail.com",
+              Name: "XYZ ShoppersStop"
+            },
+            To: [
+              {
+                Email: req.body.email,
+                Name: "Check"
+              }
+            ],
+            Subject: "Reset Password of ShopperStop",
+            HTMLPart: `<p> You requested a password reset! </p> <p> Click the below <a href="http://localhost:${process.env.PORT}/reset/${token}"> link </a> to set a new password. </p>`
+          }
+        ]
+      })
+    })
+    .then(result => {
+      console.log('Email for password change sent!');
+    })
+    .catch(err => {
+      console.log(err);
+    })
+  })
+}
+
+exports.postNewPassword = (req, res, next) => {
+  let resetUser;
+  const newPassword = req.body.password;
+  const userId = req.body.userId;
+  //we also need the token here, else by hit and trial of random token, people might reach the same route, change the password of random people on the backend.
+  const passwordToken = req.body.passwordToken;
+
+  User.findOne({
+    resetToken: passwordToken,
+    resetTokenExpiration: { $gt: Date.now() },
+    _id: userId,
+  })
+  .then(user => {
+    resetUser = user;
+    return brcypt.hash(newPassword, 12);
+  })
+  .then(hashedPassword => {
+    resetUser.password = hashedPassword;
+    resetUser.resetToken = undefined;
+    resetUser.resetTokenExpiration = undefined;
+    return resetUser.save();
+  })
+  .then(reseult => {
+    req.flash('error', 'Password changed succesfully!');
+    res.redirect('/login');
+  })
+  .catch(err => {
+    console.log(err);
+  })
+}
