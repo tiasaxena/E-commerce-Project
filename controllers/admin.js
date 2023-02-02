@@ -1,3 +1,5 @@
+const { validationResult } = require('express-validator')
+
 const Product = require('../models/product');
 
 //the second parameter passed to the render function has nothing to do with the naming and can be named anything. The variables are available in the views folder. 
@@ -6,6 +8,15 @@ exports.getAddProduct = (req, res, next) => {
     pageTitle: 'Add Product',
     path: '/admin/add-product',
     editing: false,
+    hasError: true,
+    product: {
+      title: '',
+      price: '',
+      imageUrl: '',
+      description: '',
+      userId: req.user, 
+    },
+    errorMessage: null,
   });
 };
 
@@ -41,11 +52,14 @@ exports.getEditProduct = (req, res, next) => {
     if(!product) {
       return res.redirect('/');
     }
-    res.render('admin/edit-product', {
+    return res.status(422).render('admin/edit-product', {
       pageTitle: 'Edit Product',
       path: '/admin/edit-product',
-      editing: editMode,
-      product: product,
+      editing: true,
+      hasError: false,
+      product: products,
+      errorMessage: null,
+      validationErrors: [],
     });
   })
   .catch(err => console.log(err));
@@ -56,6 +70,24 @@ exports.postAddProduct = (req, res, next) => {
   const imageUrl = req.body.imageUrl;
   const price = req.body.price;
   const description = req.body.description;
+  const errors = validationResult(req);
+
+  if(!errors.isEmpty()) {
+    return res.render('admin/edit-product', {
+      pageTitle: 'Edit Product',
+      path: '/admin/edit-product',
+      editing: false,
+      product: {
+        title: title,
+        price: price,
+        imageUrl: imageUrl,
+        description: description,
+        userId: req.user, 
+      },
+      hasError: true,
+      errorMessage: errors.array()[0].msg
+    });
+  }
 
   const product = new Product({
     title: title,
@@ -80,23 +112,40 @@ exports.postEditProducts = (req, res, next) => {
   const updatedImageUrl = req.body.imageUrl;
   const updatedPrice = req.body.price;
   const updatedDescription = req.body.description;
+  const errors = validationResult(req);
+
+  if(!errors.isEmpty()) {
+    return res.status(422).render('admin/edit-product', {
+      pageTitle: 'Edit Product',
+      path: '/admin/edit-product',
+      editing: true,
+      hasError: true,
+      product: {
+        title: updatedTitle,
+        price: updatedPrice,
+        imageUrl: updatedImageUrl,
+        description: updatedDescription,
+        _id: prodId, 
+      },
+      errorMessage: errors.array()[0].msg,
+      validationErrors: errors.array(),
+    });
+  }
 
   //authorize that the item to be editted is actually created by the currently logged in the user
   Product.findOne({
     _id: prodId
   })
   .then(product => {
-    console.log('Check1');
-    console.log(product.userId, req.user._id, product.userId !== req.user._id);
     if(String(product.userId) !== String(req.user._id)) {
-      console.log('Check2');
       return res.redirect('/');
     }
-    console.log('Check3');
+
     product.title = updatedTitle;
     product.price = updatedPrice;
     product.imageUrl = updatedImageUrl;
     product.description = updatedDescription;
+
     return product.save()
     .then(result => {
       res.redirect('/admin/products');

@@ -3,6 +3,7 @@ const crypto = require('crypto');
 
 const brcypt = require('bcryptjs'); 
 const Mailjet = require('node-mailjet');
+const { validationResult } = require('express-validator/check');
 
 require('dotenv').config();
 const User = require('../models/user');
@@ -23,6 +24,11 @@ exports.getLogin = (req, res, next) => {
     path: '/login',
     pageTitle: 'Login',
     errorMessage: message,
+    oldInput: {
+      email: '',
+      password: '',
+    },
+    validationErrors: [],
   });
 }
 
@@ -37,6 +43,12 @@ exports.getSignup = (req, res, next) => {
     path: '/signup',
     pageTitle: 'Signup',
     errorMessage: message,
+    oldInput: {
+      email: '',
+      password: '',
+      confirmPassword: '',
+    },
+    validationErrors: [],
   });
 };
 
@@ -85,13 +97,36 @@ exports.postLogin = (req, res, next) => {
   const email = req.body.email;
   const password  = req.body.password;
 
+  const errors = validationResult(req);
+  if(!errors.isEmpty()) {
+    return res.status(422)
+    .render('auth/login', {
+      path: '/login',
+      pageTitle: 'Login',
+      errorMessage: errors.array()[0].msg,
+      oldInput: { 
+        email: email,
+        password: password,
+      },
+      validationErrors: errors.array(),
+    });
+  }
   //check if email is found in the databse
   User.findOne({ email: email })
   .then(user => {
     //check for password if the user is found
     if(!user) {
-      req.flash('error', 'Email ID not registered. Please create an account first!');
-      return res.redirect('/login');
+      return res.status(422)
+      .render('auth/login', {
+      path: '/login',
+      pageTitle: 'Login',
+      errorMessage: 'Email ID not registered. Please create an account first!',
+      oldInput: { 
+        email: email,
+        password: password,
+      },
+      validationErrors: [{param: 'email'}],
+      });
     }
     brcypt.compare(password, user.password)
     .then(matchFound => {
@@ -105,8 +140,17 @@ exports.postLogin = (req, res, next) => {
           res.redirect('/');
         });                                               
       }
-      req.flash('error', 'Wrong password.');
-      return res.redirect('/login');
+      return res.status(422)
+      .render('auth/login', {
+      path: '/login',
+      pageTitle: 'Login',
+      errorMessage: 'Password did not match! Please try again.',
+      oldInput: { 
+        email: email,
+        password: password,
+      },
+      validationErrors: [{param: 'password'}],
+      });
     })
     .catch(err => {
       console.log(err);
@@ -135,62 +179,67 @@ exports.postLogout = (req, res, next) => {
 exports.postSignup = (req, res, next) => {
   const email = req.body.email;
   const password = req.body.password;
-  const confirmPassword = req.body.confirmPassword;
-
-  //check if user already exists
-  User.findOne({
-    email: email
-  })
-  .then(userDoc => {
-    if(userDoc) {
-      req.flash('error', 'E-Mail already exists! Please pick a new one.');
-      return res.redirect('/signup');
-    }
-    //since we can't decrypt, email IDs are not encrypted 
-    //12 are the rounds of salting
-    return brcypt
-    .hash(password, 12)
-    .then(hashedPassword => {
-      const user = new User({
+  
+  //check for the errors that rose while validating
+  const errors = validationResult(req);
+  if(!errors.isEmpty()) {
+    console.log(errors.array());
+    return res.status(422)
+    .render('auth/signup', {
+      path: '/signup',
+      pageTitle: 'Signup',
+      errorMessage: errors.array()[0].msg,
+      oldInput: { 
         email: email,
-        password: hashedPassword,
-        cart: { items:[] }
-      });
-      return user.save();
-    })
-    .then(result => {
-      req.flash('error', 'Successfully created account');
-      mailjet
-        .post('send', { version: 'v3.1' })
-        .request({
-          Messages: [
-            {
-              From: {
-                Email: "verma.sshubam@gmail.com",
-                Name: "XYZ ShoppersStop"
-              },
-              To: [
-                {
-                  Email: email,
-                  Name: "Check"
-                }
-              ],
-              Subject: "Successfully logged in to the Shopping site",
-              HTMLPart: "<h3>You successfully signed up to ShopperStop!</h3>"
-            }
-          ]
-        })
-        .then((result) => {
-          console.log('Account created successfully!');
-        })
-        .catch((err) => {
-            console.log('err', err);
-        })
-      return res.redirect('/login');
-    })
-    .catch(err => {
-      console.log(err);
-    })
+        password: password,
+        confirmPassword: req.body.confirmPassword,
+      },
+      validationErrors: errors.array(),
+    });
+  }
+  
+  //since we can't decrypt, email IDs are not encrypted 
+    //12 are the rounds of salting
+  brcypt
+  .hash(password, 12)
+  .then(hashedPassword => {
+    const user = new User({
+      email: email,
+      password: hashedPassword,
+      cart: { items:[] }
+    });
+    return user.save();
+  })
+  .then(result => {
+    req.flash('error', 'Successfully created account');
+    //UNCOMMENT IT LATER
+    // mailjet
+    //   .post('send', { version: 'v3.1' })
+    //   .request({
+    //     Messages: [
+    //       {
+    //         From: {
+    //           Email: "verma.sshubam@gmail.com",
+    //           Name: "XYZ ShoppersStop"
+    //         },
+    //         To: [
+    //           {
+    //             Email: email,
+    //             Name: "Check"
+    //           }
+    //         ],
+    //         Subject: "Successfully logged in to the Shopping site",
+    //         HTMLPart: "<h3>You successfully signed up to ShopperStop!</h3>"
+    //       }
+    //     ]
+    //   })
+    //   .then((result) => {
+    //     console.log('Account created successfully!');
+    //   })
+    //   .catch((err) => {
+    //       console.log('err', err);
+    //   })
+    return res.redirect('/login');
   })
   .catch(err => {
     console.log(err);
