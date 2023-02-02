@@ -19,7 +19,7 @@ router.post( '/login',
     [
       body('email')
         .isEmail()
-        .normalizeEmail()
+        // .normalizeEmail()
         .withMessage('Please enter a valid email address.'),
       body('password', 'Password has to be valid.')
         .isLength({ min: 5 })
@@ -37,7 +37,7 @@ router.post('/signup',
         [
             check('email')
             .isEmail()
-            .normalizeEmail()
+            // .normalizeEmail()
             .withMessage('Please enter a valid message.')
             .custom((value, {req} ) => {
                 // if(value === "test@test.com") {

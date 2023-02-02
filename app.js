@@ -51,28 +51,55 @@ app.use(session({
 }));
 //we need to add the csrf token to all the views wherever potential sensitive post requests are made
 app.use(csrfProtection);
+
 app.use(flash());
-app.use((req, res, next) => {
-    if (!req.session.user) {
-      return next();
-    }
-    User.findById(req.session.user._id)
-      .then(user => {
-        req.user = user;
-        next();
-      })
-      .catch(err => console.log(err));
-});
+
 app.use((req, res, next) => {
   //these will be locally available for the views of the website
   res.locals.isAuthenticated = req.session.isLoggedIn;
   res.locals.csrfToken = req.csrfToken();
   next();
 });
+
+app.use((req, res, next) => {
+    if (!req.session.user) {
+      return next();
+    }
+    User.findById(req.session.user._id)
+      .then(user => {
+        //Error Handling -> might happend that user does not exists even at this point(the user is deleted from database midway)
+        if(!user) {
+          return next();
+        }
+        req.user = user;
+        next();
+      })
+      .catch(err => {
+        // throw new Error(err); //this will fail to invoke the global error handling middleware
+        next(new Error(err));
+      });
+});
+
 app.use('/admin', adminRoutes);
+
 app.use(shopRoutes);
+
 app.use(authRoutes);
+
+app.get('/500', errorController.get500);
+
 app.use(errorController.get404);
+
+//special type of middleware that is looked after by express.
+//when multiple error handling middlewares are there, they will be executed form top to bottom.
+//This code will be invoked by all the throws
+//NOTE: the throw keyword inside catch of the session middleware in this file will though not invoke this error handling middleware.
+//Throw keyword inside the async code does not invoke the error handling middleware.
+//Work Around: next(new Error(error)) works inside of async code.
+//JIST: Oustdie async -> use direct 'throw' and inside async(Promise, Callbacks, then or catch block), wrap it inside next()
+app.use((error, req, res, next) => {
+  res.redirect('/500');
+})
 
 //connects to the same mongoDB setup but with mongoose this time
 mongoose.connect(process.env.CONNECTION_URI)

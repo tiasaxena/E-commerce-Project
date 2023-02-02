@@ -88,8 +88,10 @@ exports.getNewPassword = (req, res, next) => {
     });
   })
   .catch(err => {
-    console.log(err);
-  });
+    const error = new Error(error);
+    error.httpStatusCode = 500;
+    return next(error);
+  })
 }
 
 exports.postLogin = (req, res, next) => {
@@ -158,7 +160,9 @@ exports.postLogin = (req, res, next) => {
     })
   })
   .catch(err => {
-    console.log(err);
+    const error = new Error(error);
+    error.httpStatusCode = 500;
+    return next(error);
   })
 
   //HERE WE USE THE SESSION MIDDLEWARE
@@ -242,8 +246,10 @@ exports.postSignup = (req, res, next) => {
     return res.redirect('/login');
   })
   .catch(err => {
-    console.log(err);
-  });
+    const error = new Error(error);
+    error.httpStatusCode = 500;
+    return next(error);
+  })
 };
 
 exports.postReset = (req, res, next) => {
@@ -295,7 +301,9 @@ exports.postReset = (req, res, next) => {
       console.log('Email for password change sent!');
     })
     .catch(err => {
-      console.log(err);
+      const error = new Error(err);
+      error.httpStatusCode = 500;
+      return next(error);
     })
   })
 }
@@ -327,6 +335,8 @@ exports.postNewPassword = (req, res, next) => {
     res.redirect('/login');
   })
   .catch(err => {
-    console.log(err);
+    const error = new Error(error);
+    error.httpStatusCode = 500;
+    return next(error);
   })
 }

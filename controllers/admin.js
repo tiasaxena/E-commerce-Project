@@ -1,5 +1,4 @@
-const { validationResult } = require('express-validator')
-
+const { validationResult } = require('express-validator');
 const Product = require('../models/product');
 
 //the second parameter passed to the render function has nothing to do with the naming and can be named anything. The variables are available in the views folder. 
@@ -17,6 +16,7 @@ exports.getAddProduct = (req, res, next) => {
       userId: req.user, 
     },
     errorMessage: null,
+    validationErrors: [],
   });
 };
 
@@ -34,9 +34,11 @@ exports.getProducts = (req, res, next) => {
       path: '/admin/products',
     });
   })
-  .catch(err =>{
-    console.log(err);
-  });
+  .catch(err => {
+    const error = new Error(error);
+    error.httpStatusCode = 500;
+    return next(error);
+  })
 };
 
 exports.getEditProduct = (req, res, next) => {
@@ -62,7 +64,13 @@ exports.getEditProduct = (req, res, next) => {
       validationErrors: [],
     });
   })
-  .catch(err => console.log(err));
+  .catch(err => {
+    // res.redirect('/500');
+    const error = new Error(error);
+    error.httpStatusCode = 500;
+    //if we pass an error instance in next, execution of all the next middleware stops and express looks up to execute that Error Handling Middleware
+    return next(error);
+  });
 };
 
 exports.postAddProduct = (req, res, next) => {
@@ -102,7 +110,9 @@ exports.postAddProduct = (req, res, next) => {
     res.redirect('/admin/products');
   })
   .catch(err => {
-    console.log(err);
+    const error = new Error(error);
+    error.httpStatusCode = 500;
+    return next(error);
   })
 };
 
@@ -151,12 +161,16 @@ exports.postEditProducts = (req, res, next) => {
       res.redirect('/admin/products');
     })
     .catch(err => {
-      console.log(err);
+      const error = new Error(error);
+      error.httpStatusCode = 500;
+      return next(error);
     })
   })
   .catch(err => {
-    console.log(err);
-  });
+    const error = new Error(error);
+    error.httpStatusCode = 500;
+    return next(error);
+  })
 };
 
 exports.postDeleteProduct = (req, res, next) => {
@@ -169,6 +183,8 @@ exports.postDeleteProduct = (req, res, next) => {
     res.redirect('/admin/products');
   })
   .catch(err => {
-    console.log(err);
-  });
+    const error = new Error(error);
+    error.httpStatusCode = 500;
+    return next(error);
+  })
 }
