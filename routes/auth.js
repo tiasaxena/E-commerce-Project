@@ -1,6 +1,6 @@
 const express = require('express');
 //here you can add only head, body, cookie, params, etc. to test the specific type of requests
-const { check, body } = require('express-validator/check');
+const { check, body } = require('express-validator');
 
 const authController = require('../controllers/auth');4
 const User = require('../models/user');

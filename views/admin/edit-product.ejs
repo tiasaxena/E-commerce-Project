@@ -12,7 +12,8 @@
                 <%= errorMessage %>
             </div>
         <% } %>
-        <form class="product-form" action="/admin/<% if (editing) { %>edit-product<% } else { %>add-product<% } %>" method="POST">
+        <!-- enctype = multipart/form-data means the form's input fields will have plain text and binary files too. Multer will specifically look for the forms with enctype set to 'multipart/form-data'-->
+        <form class="product-form" action="/admin/<% if (editing) { %>edit-product<% } else { %>add-product<% } %>" method="POST" enctype="multipart/form-data">
             <div class="form-control">
                 <label for="title">Title</label>
                 <input
@@ -22,7 +23,7 @@
                 id="title"
                 value="<% if (editing || hasError) { %><%= product.title %><% } %>">
             </div>
-            <div class="form-control">
+            <!-- <div class="form-control">
                 <label for="imageUrl">Image URL</label>
                 <input
                 class="<%= validationErrors.find(e => e.param === 'imageUrl') ? 'invalid' : '' %>"
@@ -30,6 +31,13 @@
                 name="imageUrl"
                 id="imageUrl"
                 value="<% if (editing || hasError) { %><%= product.imageUrl %><% } %>">
+            </div> -->
+            <div class="form-control">
+                <label for="image">Image</label>
+                <input
+                type="file"
+                name="image"
+                id="image" />
             </div>
             <div class="form-control">
                 <label for="price">Price</label>

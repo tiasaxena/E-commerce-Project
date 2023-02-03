@@ -3,7 +3,7 @@ const crypto = require('crypto');
 
 const brcypt = require('bcryptjs'); 
 const Mailjet = require('node-mailjet');
-const { validationResult } = require('express-validator/check');
+const { validationResult } = require('express-validator');
 
 require('dotenv').config();
 const User = require('../models/user');
@@ -88,7 +88,7 @@ exports.getNewPassword = (req, res, next) => {
     });
   })
   .catch(err => {
-    const error = new Error(error);
+    const error = new Error(err);
     error.httpStatusCode = 500;
     return next(error);
   })
@@ -160,7 +160,7 @@ exports.postLogin = (req, res, next) => {
     })
   })
   .catch(err => {
-    const error = new Error(error);
+    const error = new Error(err);
     error.httpStatusCode = 500;
     return next(error);
   })
@@ -246,7 +246,7 @@ exports.postSignup = (req, res, next) => {
     return res.redirect('/login');
   })
   .catch(err => {
-    const error = new Error(error);
+    const error = new Error(err);
     error.httpStatusCode = 500;
     return next(error);
   })
@@ -335,7 +335,7 @@ exports.postNewPassword = (req, res, next) => {
     res.redirect('/login');
   })
   .catch(err => {
-    const error = new Error(error);
+    const error = new Error(err);
     error.httpStatusCode = 500;
     return next(error);
   })

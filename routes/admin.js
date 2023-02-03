@@ -1,7 +1,7 @@
 const path = require('path');
 const express = require('express');
 const router = express.Router();
-const { body } = require('express-validator/check')
+const { body } = require('express-validator')
 
 const adminController = require('../controllers/admin');
 const isAuth = require('../middleware/is-auth');
@@ -19,7 +19,7 @@ router.get('/edit-product/:productId', isAuth, adminController.getEditProduct);
 router.post('/add-product',
     [
         body('title').isString().isLength({ min: 3 }).trim().withMessage('Title should be of minimum 3 length!'),
-        body('imageUrl').isURL().withMessage('The image URL provided is incorrect!'),
+        // body('imageUrl').isURL().withMessage('The image URL provided is incorrect!'),
         body('price').isFloat().withMessage('Price must be a decimal formatted number!'),
         body('description').isLength({ min: 5, max: 400 }).trim().withMessage('The description must have minimum 5 and maximum 400 length!'),
     ],
@@ -30,7 +30,7 @@ router.post('/add-product',
 router.post('/edit-product', 
     [
         body('title').isString().isLength({ min: 3 }).trim().withMessage('Title should be of minimum 3 length!'),
-        body('imageUrl').isURL().withMessage('The image URL provided is incorrect!'),
+        // body('imageUrl').isURL().withMessage('The image URL provided is incorrect!'),
         body('price').isFloat().withMessage('Price must be a decimal formatted number!'),
         body('description').isLength({ min: 5, max: 400 }).trim().withMessage('The description must have minimum 5 and maximum 400 length!'),
     ],

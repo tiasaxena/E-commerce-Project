@@ -1,4 +1,6 @@
 const { validationResult } = require('express-validator');
+
+const fileHelper = require('../util/file');
 const Product = require('../models/product');
 
 //the second parameter passed to the render function has nothing to do with the naming and can be named anything. The variables are available in the views folder. 
@@ -35,7 +37,7 @@ exports.getProducts = (req, res, next) => {
     });
   })
   .catch(err => {
-    const error = new Error(error);
+    const error = new Error(err);
     error.httpStatusCode = 500;
     return next(error);
   })
@@ -66,7 +68,7 @@ exports.getEditProduct = (req, res, next) => {
   })
   .catch(err => {
     // res.redirect('/500');
-    const error = new Error(error);
+    const error = new Error(err);
     error.httpStatusCode = 500;
     //if we pass an error instance in next, execution of all the next middleware stops and express looks up to execute that Error Handling Middleware
     return next(error);
@@ -75,10 +77,29 @@ exports.getEditProduct = (req, res, next) => {
 
 exports.postAddProduct = (req, res, next) => {
   const title = req.body.title;
-  const imageUrl = req.body.imageUrl;
+  const image = req.file;
   const price = req.body.price;
   const description = req.body.description;
   const errors = validationResult(req);
+  
+  //Handle if the file format in the form is not supported
+  if(!image) {
+    return res.render('admin/edit-product', {
+      pageTitle: 'Add Product',
+      path: '/admin/add-product',
+      editing: true,
+      hasError: true,
+      product: {
+        title: title,
+        price: price,
+        description: description,
+      },
+      errorMessage: 'File format not supported! It should be an image.',
+      validationErrors: [],
+    });
+  }
+
+  const imageUrl = image.path;
 
   if(!errors.isEmpty()) {
     return res.render('admin/edit-product', {
@@ -93,7 +114,8 @@ exports.postAddProduct = (req, res, next) => {
         userId: req.user, 
       },
       hasError: true,
-      errorMessage: errors.array()[0].msg
+      errorMessage: errors.array()[0].msg,
+      validationErrors: errors.array(),
     });
   }
 
@@ -110,7 +132,7 @@ exports.postAddProduct = (req, res, next) => {
     res.redirect('/admin/products');
   })
   .catch(err => {
-    const error = new Error(error);
+    const error = new Error(err);
     error.httpStatusCode = 500;
     return next(error);
   })
@@ -119,10 +141,28 @@ exports.postAddProduct = (req, res, next) => {
 exports.postEditProducts = (req, res, next) => {
   const prodId = req.body.productId;
   const updatedTitle = req.body.title;
-  const updatedImageUrl = req.body.imageUrl;
+  const updatedImage = req.file;
   const updatedPrice = req.body.price;
   const updatedDescription = req.body.description;
   const errors = validationResult(req);
+
+  if(!updatedImage || updatedImage === undefined) {
+    return res.render('admin/edit-product', {
+      pageTitle: 'Add Product',
+      path: '/admin/edit-product',
+      editing: true,
+      hasError: true,
+      product: {
+        title: updatedTitle,
+        price: updatedPrice,
+        description: updatedDescription,
+      },
+      errorMessage: 'File format not supported! It should be an image.',
+      validationErrors: [],
+    });
+  }
+
+  const updatedImageUrl = updatedImage.path;
 
   if(!errors.isEmpty()) {
     return res.status(422).render('admin/edit-product', {
@@ -153,7 +193,10 @@ exports.postEditProducts = (req, res, next) => {
 
     product.title = updatedTitle;
     product.price = updatedPrice;
-    product.imageUrl = updatedImageUrl;
+    if(updatedImage) {
+      fileHelper.deleteFile(product.imageUrl);
+      product.imageUrl = updatedImageUrl;
+    }
     product.description = updatedDescription;
 
     return product.save()
@@ -161,13 +204,13 @@ exports.postEditProducts = (req, res, next) => {
       res.redirect('/admin/products');
     })
     .catch(err => {
-      const error = new Error(error);
+      const error = new Error(err);
       error.httpStatusCode = 500;
       return next(error);
     })
   })
   .catch(err => {
-    const error = new Error(error);
+    const error = new Error(err);
     error.httpStatusCode = 500;
     return next(error);
   })
@@ -175,15 +218,24 @@ exports.postEditProducts = (req, res, next) => {
 
 exports.postDeleteProduct = (req, res, next) => {
   const prodId = req.body.productId;
-  Product.deleteOne({
-    _id: prodId,
-    userId: req.user._id,
+  //find if file exists
+  //if it does, remove from the images folder also
+  Product.findById(prodId)
+  .then(product => {
+    if(!product) {
+      return next(new Error('Product not found!'));
+    }
+    fileHelper.deleteFile(product.imageUrl);
+    return Product.deleteOne({
+      _id: prodId,
+      userId: req.user._id,
+    })
   })
   .then(() => {
     res.redirect('/admin/products');
   })
   .catch(err => {
-    const error = new Error(error);
+    const error = new Error(err);
     error.httpStatusCode = 500;
     return next(error);
   })
