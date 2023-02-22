@@ -39,15 +39,12 @@ const fileStorage = multer.diskStorage({
 const fileFilter = (req, file, callback) => {
   if(file.mimetype === 'image/png' || file.mimetype === 'image/jpg' || file.mimetype === 'image/jpeg') {
     //true tells that the file must be stored as it has nothing wrong with it
-    console.log('IMAGE');
     callback(null, true);
   } else {
     //false tells that the file must not be stored as it has wrong extension type which we do not support.
-    console.log('NO IMAGE');
     callback(null, false);
   }
 }
-
 
 app.set('view engine', 'ejs');
 

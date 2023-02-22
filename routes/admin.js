@@ -12,7 +12,7 @@ router.get('/add-product', isAuth, adminController.getAddProduct);
 // /admin/products => GET
 router.get('/products', isAuth, adminController.getProducts);
 
-// // /admin/edit-product => GET
+// /admin/edit-product => GET
 router.get('/edit-product/:productId', isAuth, adminController.getEditProduct);
 
 // /admin/add-product => POST
@@ -26,7 +26,7 @@ router.post('/add-product',
     isAuth, 
     adminController.postAddProduct);
 
-// // /admin/edit-product => POST
+// /admin/edit-product => POST
 router.post('/edit-product', 
     [
         body('title').isString().isLength({ min: 3 }).trim().withMessage('Title should be of minimum 3 length!'),
