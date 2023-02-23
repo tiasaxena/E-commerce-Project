@@ -5,6 +5,7 @@ const bodyParser = require('body-parser');
 const mongoose = require('mongoose');
 const session = require('express-session');
 const MongoDBStore = require('connect-mongodb-session')(session);
+//* The csurf package looks not only into the req,body but also the query parameters
 const csrf = require('csurf'); //prevents from CSRF attacks
 const flash = require('connect-flash'); //flash is a special area of session for storing messages 
 

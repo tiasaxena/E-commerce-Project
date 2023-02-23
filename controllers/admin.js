@@ -216,8 +216,9 @@ exports.postEditProducts = (req, res, next) => {
   })
 };
 
-exports.postDeleteProduct = (req, res, next) => {
-  const prodId = req.body.productId;
+exports.deleteProduct = (req, res, next) => {
+// exports.postDeleteProduct = (req, res, next) => {
+  const prodId = req.params.productId;
   //find if file exists
   //if it does, remove from the images folder also
   Product.findById(prodId)
@@ -232,11 +233,15 @@ exports.postDeleteProduct = (req, res, next) => {
     })
   })
   .then(() => {
-    res.redirect('/admin/products');
+    // res.redirect('/admin/products');
+
+    //the normal object will be changed to json using .json 
+    res.status(200).json({ message: 'Success!' });
   })
   .catch(err => {
-    const error = new Error(err);
-    error.httpStatusCode = 500;
-    return next(error);
+    // const error = new Error(err);
+    // error.httpStatusCode = 500;
+    // return next(error);
+    res.status(500).json({ message: 'Deleting product failed.' });
   })
 }
