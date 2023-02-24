@@ -137,8 +137,15 @@ app.use(errorController.get404);
 //Work Around: next(new Error(error)) works inside of async code.
 //JIST: Outside async -> use direct 'throw' and inside async(Promise, Callbacks, then or catch block), wrap it inside next()
 app.use((error, req, res, next) => {
-  res.redirect('/500');
-})
+  // res.status(error.httpStatusCode).render(...);
+  // res.redirect('/500');
+  console.log('err hai bhai', error);
+  res.status(500).render('500', {
+    pageTitle: 'Error!',
+    path: '/500',
+    isAuthenticated: req.session.isLoggedIn
+  });
+});
 
 //connects to the same mongoDB setup but with mongoose this time
 mongoose.connect(process.env.CONNECTION_URI)

@@ -32,6 +32,7 @@
     "node-mailjet": "^6.0.1",
     "pdfkit": "^0.13.0",
     "pug": "^2.0.3",
-    "sequelize": "^6.28.0"
+    "sequelize": "^6.28.0",
+    "stripe": "^11.11.0"
   }
 }

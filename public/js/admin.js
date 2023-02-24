@@ -3,8 +3,9 @@ const deleteProduct = btn => {
     const csrf = btn.parentNode.querySelector('[name=_csrf]').value;
     
     const productElement = btn.closest('article');
-
+ 
     //* fetch() is used to FETCH as well as SEND data.
+    //Here we ain't sending data , we don't have a POST form.
     fetch('/admin/product/' + prodId, {
         method: 'DELETE',
         headers: {
@@ -15,7 +16,7 @@ const deleteProduct = btn => {
       return result.json();
     })
     .then(data => {
-      console.log(data);
+        console.log(data);
       productElement.parentNode.removeChild(productElement);
     })
     .catch(err => {
