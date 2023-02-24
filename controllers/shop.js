@@ -202,7 +202,6 @@ exports.getCheckout = (req, res, next) => {
       });
       return stripe.checkout.sessions.create({
         payment_method_types: ['card'],
-        mode: 'payment',
         line_items: products.map(p => {
           return {
             price_data: {
