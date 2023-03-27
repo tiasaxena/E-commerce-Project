@@ -39,7 +39,7 @@ router.post('/edit-product',
 
 // /admin/delete-product => POST
 // router.post('/delete-product', isAuth, adminController.postDeleteProduct);
-//TODO Now we not delete using our desgined logic, let JS do it for us using https keyword --> 'delete'
+//! Now we'll not delete using our desgined logic, let JS do it for us using https keyword --> 'delete'
 //* The delete keyword accepts query parameters but not the req.body
 router.delete('/product/:productId', isAuth, adminController.deleteProduct);  
 

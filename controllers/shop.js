@@ -1,12 +1,9 @@
 const fs = require('fs');
 const path = require('path');
-
-require('dotenv').config();
-
 const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);  
-
 const PDFDocument = require('pdfkit');
 
+require('dotenv').config();
 const Product = require('../models/product');
 const Order = require('../models/order');
 
@@ -54,7 +51,11 @@ exports.getProduct = (req, res, next) => {
       path: '/products',
     });
   })
-  .catch(err => console.log('Error in showing the product details', err));
+  .catch(err => {
+    const error = new Error(err);
+    error.httpStatusCode = 500;
+    return next(error);
+  });
 };
 
 exports.getIndex = (req, res, next) => {
@@ -102,7 +103,9 @@ exports.getCart = (req, res, next) => {
     });
   })
   .catch(err => {
-    console.log(err);
+    const error = new Error(err);
+    error.httpStatusCode = 500;
+    return next(error);
   });
 }
 
@@ -124,8 +127,6 @@ exports.getOrders = (req, res, next) => {
 
 exports.getInvoice = (req, res, next) => {
   const orderId = req.params.orderId;
-  const invoiceName = 'invoice-' + orderId + '.pdf';
-  const invoicePath = path.join('data', 'invoices', invoiceName);
 
   Order.findById(orderId)
   .then(order => {
@@ -135,6 +136,9 @@ exports.getInvoice = (req, res, next) => {
     if(String(order.user.userId) !== String(req.user._id)) {
       return next(new Error('Unauthorized!'))
     }
+
+    const invoiceName = 'invoice-' + orderId + '.pdf';
+    const invoicePath = path.join('data', 'invoices', invoiceName);
 
     //Reading entire files will increase the load times and will not provide good experience to the user with increase in the load time.
     // fs.readFile(invoicePath, (err, data) => {
@@ -156,32 +160,33 @@ exports.getInvoice = (req, res, next) => {
         // file.pipe(res);
 
         //Using PDFKit
-        const pdfDoc = new PDFDocument();
-        res.setHeader('Content-Type', 'application/pdf');
-        res.setHeader('Content-Disposition', 'inline; filename="' + invoiceName + '" ');
-        pdfDoc.pipe(fs.createWriteStream(invoicePath)); 
-        pdfDoc.pipe(res);
+    const pdfDoc = new PDFDocument();
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', 'inline; filename="' + invoiceName + '" ');
+    pdfDoc.pipe(fs.createWriteStream(invoicePath)); 
+    pdfDoc.pipe(res);
 
-        pdfDoc.fontSize(20).text('Invoice', {
-          underline: true,
-        });
-        pdfDoc.text('-------------------------------------------');
-        let totalPrice = 0;
-        order.products.forEach(prod => {
-          totalPrice += prod.quantity * prod.product.price;
-          pdfDoc.text(
-            prod.product.title + 
-            ' - ' + 
-            prod.quantity + 
-            ' x ' + 
-            ' $ ' + 
-            prod.product.price
-          );
-        });
-        pdfDoc.text('----');
-        pdfDoc.text('Total Price: $' + totalPrice);
-
-        pdfDoc.end();
+    pdfDoc.fontSize(26).text('Invoice', {
+      underline: true,
+    });
+    pdfDoc.text('-------------------------------------------');
+    let totalPrice = 0;
+    order.products.forEach(prod => {
+      totalPrice += prod.quantity * prod.product.price;
+      pdfDoc
+      .fontSize(14)
+      .text(
+        prod.product.title + 
+        ' - ' + 
+        prod.quantity + 
+        ' x ' + 
+        ' $ ' + 
+        prod.product.price
+      );
+    });
+    pdfDoc.text('----');
+    pdfDoc.fontSize(20).text('Total Price: $' + totalPrice);
+    pdfDoc.end();
   })
   .catch(err => {
     throw next(new Error('No order found!'));
@@ -260,7 +265,6 @@ exports.getCheckoutSuccess = (req, res, next) => {
       res.redirect('/orders');
     })
     .catch(err => {
-      console.log('CHECKOUT SUCESS', err)
       const error = new Error(err);
       error.httpStatusCode = 500;
       return next(error);
@@ -278,7 +282,9 @@ exports.postCart = (req, res, next) => {
     res.redirect('/cart');
   })
   .catch(err => {
-    console.log(err);
+    const error = new Error(err);
+    error.httpStatusCode = 500;
+    return next(error);
   })
   
 }
@@ -289,7 +295,7 @@ exports.postOrder = (req, res, next) => {
   .populate('cart.items.productId')
   .then(user => {
     const products = user.cart.items.map(item => {
-      return { product: { ...item.productId._doc }, quantity: item.quantity }
+      return { quantity: item.quantity, product: { ...item.productId._doc } }
     });
     const order = new Order({
       user: {
@@ -308,7 +314,9 @@ exports.postOrder = (req, res, next) => {
     res.redirect('/orders');
   })
   .catch(err => {
-    console.log(err);
+    const error = new Error(err);
+      error.httpStatusCode = 500;
+      return next(error);
   });
 }
 
@@ -319,6 +327,8 @@ exports.postDeleteCartProduct = (req, res, next) => {
     res.redirect('/cart');
   })
   .catch(err => {
-    console.log(err);
+    const error = new Error(err);
+    error.httpStatusCode = 500;
+    return next(error);
   });
 } 
